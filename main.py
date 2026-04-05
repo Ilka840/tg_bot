@@ -1,22 +1,38 @@
+import os
 import asyncio
+from aiohttp import web
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters import Command
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
-# 1. НОВІ ІМПОРТИ ДЛЯ СТАНІВ
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.client.session.aiohttp import AiohttpSession
 
-API_TOKEN = '8652491541:AAEJftjZCS7X_Hs06BiTLpC5JzaxRdDJb-Y'
-ADMIN_ID = 1492545732 # Твій ID сюди
 
-# 2. СТВОРЮЄМО КЛАС СТАНУ (це як назва режиму)
+API_TOKEN = '8652491541:AAEJftjZCS7X_Hs06BiTLpC5JzaxRdDJb-Y'
+ADMIN_ID = 1492545732
+
+async def handle(request):
+    return web.Response(text="Bot is running!")
+
+async def start_web_server():
+    app = web.Application()
+    app.router.add_get('/', handle)
+    runner = web.AppRunner(app)
+    await runner.setup()
+    port = into(os.getenv("PORT", 8080))
+    site = web.TCPSite(runner, '0.0.0.0', port)
+    await site.start()
+    print(f"Web server started on port {port}")
+    
 class OrderState(StatesGroup):
     waiting_for_order = State()
 
 async def main():
     bot = Bot(token=API_TOKEN)
     dp = Dispatcher()
+
+    await stert_web_server()
 
     @dp.message(Command("start"))
     async def cmd_start(message: types.Message):
@@ -30,7 +46,6 @@ async def main():
         keyboard = ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True)
         await message.answer("В цьому боті ви можете зробити замовлення свого власного сайта чи телеграм бота.", reply_markup=keyboard)
 
-    # 3. КОМАНДА ЗАМОВЛЕННЯ (вмикає режим очікування)
     @dp.message(F.text == "Замовити")
     @dp.message(Command("order"))
     async def cmd_order(message: types.Message, state: FSMContext):
@@ -38,17 +53,13 @@ async def main():
         # Цей рядок каже боту: "Чекай на текст!"
         await state.set_state(OrderState.waiting_for_order)
 
-    # 4. ОБРОБНИК, ЯКИЙ СПРАЦЮЄ ТІЛЬКИ ЯКЩО УВІМКНЕНО РЕЖИМ ЗАМОВЛЕННЯ
     @dp.message(OrderState.waiting_for_order)
     async def process_order(message: types.Message, state: FSMContext):
-        # Пересилаємо адміну
         await bot.send_message(ADMIN_ID, f"ЗАМОВЛЕННЯ від @{message.from_user.username}:\n{message.text}")
         
         await message.answer("Дякуємо! Ваше замовлення надіслано розробнику.")
-        # ВИМИКАЄМО режим очікування (обов'язково!)
         await state.clear()
 
-    # РЕШТА КОМАНД (вони тепер не будуть перехоплювати текст замовлення)
     @dp.message(F.text == "Інформація")
     @dp.message(Command("info"))
     async def cmd_info(message: types.Message):
