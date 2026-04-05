@@ -20,7 +20,7 @@ async def start_web_server():
     app.router.add_get('/', handle)
     runner = web.AppRunner(app)
     await runner.setup()
-    port = into(os.getenv("PORT", 8080))
+    port = int(os.getenv("PORT", 8080))
     site = web.TCPSite(runner, '0.0.0.0', port)
     await site.start()
     print(f"Web server started on port {port}")
@@ -32,7 +32,7 @@ async def main():
     bot = Bot(token=API_TOKEN)
     dp = Dispatcher()
 
-    await stert_web_server()
+    await start_web_server()
 
     @dp.message(Command("start"))
     async def cmd_start(message: types.Message):
