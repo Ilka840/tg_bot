@@ -9,7 +9,7 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMar
 from aiogram.client.session.aiohttp import AiohttpSession
 
 
-API_TOKEN = '8652491541:AAEJftjZCS7X_Hs06BiTLpC5JzaxRdDJb-Y'
+API_TOKEN = os.getenv("BOT_TOKEN")
 ADMIN_ID = 1492545732
 
 async def handle(request):
