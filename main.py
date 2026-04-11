@@ -82,7 +82,28 @@ async def main():
     async def cmd_help(message: types.Message):
         kb_h = [[InlineKeyboardButton(text="Менеджер", url="https://t.me/ilkka324")]]
         await message.answer("Зв'язок:", reply_markup=InlineKeyboardMarkup(inline_keyboard=kb_h))
+    @dp.message(OrderState.waiting_for_order)
+    async def process_order(message: types.Message, state: FSMContext):
+        # Список назв кнопок, щоб бот розумів, що це не текст замовлення
+        menu_buttons = ["Інформація", "Інструкція", "Прайс", "Замовити", "Підтримка"]
+        
+        # Якщо користувач натиснув іншу кнопку або ввів команду
+        if message.text.startswith("/") or message.text in menu_buttons:
+            await state.clear()
+            # Перенаправляємо на відповідну функцію
+            if message.text in ["Інформація", "/info"]: await cmd_info(message)
+            elif message.text in ["Інструкція", "/instruction"]: await cmd_instruction(message)
+            elif message.text in ["Прайс", "/price"]: await cmd_price(message)
+            elif message.text in ["Замовити", "/order"]: await cmd_order(message, state)
+            elif message.text in ["Підтримка", "/help"]: await cmd_help(message)
+            elif message.text == "/start": await cmd_start(message)
+            return
 
+        # Якщо це звичайний текст - відправляємо адміну
+        username = f"@{message.from_user.username}" if message.from_user.username else message.from_user.full_name
+        await bot.send_message(ADMIN_ID, f"ЗАМОВЛЕННЯ від {username}:\n{message.text}")
+        await message.answer("Дякуємо! Ваше замовлення надіслано розробнику.")
+        await state.clear()
     print("Бот знову в строю")
     await dp.start_polling(bot)
 
