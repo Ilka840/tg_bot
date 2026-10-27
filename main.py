@@ -9,12 +9,14 @@ from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Update
 
+# Зчитуємо змінні з сервера
 API_TOKEN = os.getenv("BOT_TOKEN")
 RENDER_APP_NAME = os.getenv("RENDER_APP_NAME")
 
-ADMIN_ID = 1492545732
+# Формуємо URL вебхука
 WEBHOOK_URL = f"https://{RENDER_APP_NAME}://"
 
+# Ініціалізація бота
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher()
 
@@ -68,23 +70,35 @@ async def cmd_help(message: types.Message):
     kb_h = [[InlineKeyboardButton(text="Менеджер", url="https://t.me")]]
     await message.answer("Зв'язок:", reply_markup=InlineKeyboardMarkup(inline_keyboard=kb_h))
 
-# --- КЕРУВАННЯ ВЕБХУКОМ НА СТАРТІ ---
+# --- ЗАХИЩЕНЕ КЕРУВАННЯ ВЕБХУКОМ ПРИ СТАРТІ ---
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    await bot.set_webhook(WEBHOOK_URL, drop_pending_updates=True)
+    print(f"🤖 Намагаємось встановити Webhook на адресу: {WEBHOOK_URL}")
+    try:
+        await bot.set_webhook(WEBHOOK_URL, drop_pending_updates=True)
+        print("✅ Webhook успішно зареєстровано в Telegram!")
+    except Exception as e:
+        print(f"❌ Помилка встановлення Webhook: {e}")
     yield
-    await bot.delete_webhook()
+    try:
+        await bot.delete_webhook()
+        print("Бот зупинено, Webhook видалено.")
+    except Exception as e:
+        print(f"Помилка видалення Webhook: {e}")
 
 # Створення FastAPI додатка
 app = FastAPI(lifespan=lifespan)
 
 @app.post("/webhook")
 async def telegram_webhook(request: Request):
-    json_data = await request.json()
-    update = Update.model_validate(json_data, context={"bot": bot})
-    await dp.feed_update(bot, update)
+    try:
+        json_data = await request.json()
+        update = Update.model_validate(json_data, context={"bot": bot})
+        await dp.feed_update(bot, update)
+    except Exception as e:
+        print(f"Помилка обробки апдейту: {e}")
     return {"status": "ok"}
 
 @app.get("/")
 def read_root():
-    return {"message": "Бот активний!"}
+    return {"message": "Бот активний!", "webhook_url": WEBHOOK_URL}
