@@ -14,7 +14,7 @@ API_TOKEN = os.getenv("BOT_TOKEN")
 
 ADMIN_ID = os.getenv("ADMIN_ID", 1492545732)
 
-WEBHOOK_URL = "https://tg-bot-1-9a5t.onrender.com"
+WEBHOOK_URL = "https://tg-bot-1-9a5t.onrender.com/webhook"
 
 # Ініціалізація бота
 bot = Bot(token=API_TOKEN)
