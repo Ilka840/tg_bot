@@ -1,30 +1,33 @@
 import asyncio
-import os
+from contextlib import asynccontextmanager
+from fastapi import FastAPI, Request
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters import Command
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
+from aiogram.types import Update
 
-# Токен та ID адміна (залишаємо ваші)
-API_TOKEN = 'BOT_TOKEN'
+API_TOKEN = '8652491541:AAEJftjZCS7X_Hs06BiTLpC5JzaxRdDJb-Y'
 ADMIN_ID = 1492545732
 
-class OrderState(StatesGroup):
-    waiting_for_order = State()
+# URL вашого майбутнього додатка на Render (замініть my-bot-name на назву, яку вкажете на Render)
+RENDER_APP_NAME = "my-bot-name" 
+WEBHOOK_URL = f"https://{RENDER_APP_NAME}://"
 
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher()
 
-# --- ХЕНДЛЕРИ БОТА ---
+class OrderState(StatesGroup):
+    waiting_for_order = State()
+
+# --- ВАШІ ОРИГІНАЛЬНІ ХЕНДЛЕРИ БОТА ---
 
 @dp.message(Command("start"))
 async def cmd_start(message: types.Message):
     kb = [
-        [KeyboardButton(text="Інформація")],
-        [KeyboardButton(text="Інструкція")],
-        [KeyboardButton(text="Прайс")],
-        [KeyboardButton(text="Замовити")],
+        [KeyboardButton(text="Інформація")], [KeyboardButton(text="Інструкція")],
+        [KeyboardButton(text="Прайс")], [KeyboardButton(text="Замовити")],
         [KeyboardButton(text="Підтримка")]
     ]
     keyboard = ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=True)
@@ -46,19 +49,18 @@ async def process_order(message: types.Message, state: FSMContext):
 @dp.message(F.text == "Інформація")
 @dp.message(Command("info"))
 async def cmd_info(message: types.Message):
-    text = "В цьому боті ви можете замовити сайт або бота для будь-яких потреб."
-    await message.answer(text)
+    await message.answer("В цьому боті ви можете замовити сайт або бота для будь-яких потреб.")
 
 @dp.message(F.text == "Інструкція")
 @dp.message(Command("instruction"))
 async def cmd_instruction(message: types.Message):
-    text = ("1. ознайомтесь з цінами.\n" "2. зробіть бажане замовлення.\n" "3. почекайте поки воно буде виконано.\n" "4. оплатіть і моментально отримайте готовий проєкт.")
+    text = ("1. ознайомтесь з цінами.\n2. зробіть бажане замовлення.\n3. почекайте поки воно буде виконано.\n4. оплатіть і моментально отримайте готовий проєкт.")
     await message.answer(text)
 
 @dp.message(F.text == "Прайс")
 @dp.message(Command("price"))
 async def cmd_price(message: types.Message):
-    await message.answer("бот візитка - 700 грн.\n" "бот для запису - 2500 грн.\n" "бот для реєстрації - 3500 грн.\n" "сайт - 1500 грн.")
+    await message.answer("бот візитка - 700 грн.\nбот для запису - 2500 грн.\nбот для реєстрації - 3500 грн.\nсайт - 1500 грн.")
 
 @dp.message(F.text == "Підтримка")
 @dp.message(Command("help"))
@@ -66,12 +68,23 @@ async def cmd_help(message: types.Message):
     kb_h = [[InlineKeyboardButton(text="Менеджер", url="https://t.me")]]
     await message.answer("Зв'язок:", reply_markup=InlineKeyboardMarkup(inline_keyboard=kb_h))
 
-# --- ЗАПУСК БОТА ---
-async def main():
-    # Перед запуском про всяк випадок видаляємо старі вебхуки з PythonAnywhere
-    await bot.delete_webhook(drop_pending_updates=True)
-    print("Бот успішно запустився через Polling!")
-    await dp.start_polling(bot)
+# --- КЕРУВАННЯ ВЕБХУКОМ НА СТАРТІ ---
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await bot.set_webhook(WEBHOOK_URL, drop_pending_updates=True)
+    yield
+    await bot.delete_webhook()
 
-if __name__ == "__main__":
-    asyncio.run(main())
+# Створення FastAPI додатка
+app = FastAPI(lifespan=lifespan)
+
+@app.post("/webhook")
+async def telegram_webhook(request: Request):
+    json_data = await request.json()
+    update = Update.model_validate(json_data, context={"bot": bot})
+    await dp.feed_update(bot, update)
+    return {"status": "ok"}
+
+@app.get("/")
+def read_root():
+    return {"message": "Бот активний!"}
