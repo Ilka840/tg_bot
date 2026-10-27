@@ -13,7 +13,8 @@ from aiogram.types import Update
 API_TOKEN = os.getenv("BOT_TOKEN")
 RENDER_APP_NAME = os.getenv("RENDER_APP_NAME")
 
-WEBHOOK_URL = f"https://{RENDER_APP_NAME}://"
+DOMEN_PATH = "://"
+WEBHOOK_URL = f"https://{RENDER_APP_NAME}{DOMEN_PATH}"
 
 # Ініціалізація бота
 bot = Bot(token=API_TOKEN)
