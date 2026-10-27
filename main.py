@@ -13,8 +13,10 @@ from aiogram.types import Update
 API_TOKEN = os.getenv("BOT_TOKEN")
 RENDER_APP_NAME = os.getenv("RENDER_APP_NAME")
 
-DOMEN_PATH = "://"
-WEBHOOK_URL = f"https://{RENDER_APP_NAME}{DOMEN_PATH}"
+ADMIN_ID = os.getenv("ADMIN_ID", 1492545732)
+
+# Виправлено формування URL для вебхука на Render + додано шлях /webhook
+WEBHOOK_URL = f"https://{RENDER_APP_NAME}://"
 
 # Ініціалізація бота
 bot = Bot(token=API_TOKEN)
@@ -22,8 +24,6 @@ dp = Dispatcher()
 
 class OrderState(StatesGroup):
     waiting_for_order = State()
-
-# --- ВАШІ ОРИГІНАЛЬНІ ХЕНДЛЕРИ БОТА ---
 
 @dp.message(Command("start"))
 async def cmd_start(message: types.Message):
@@ -44,8 +44,12 @@ async def cmd_order(message: types.Message, state: FSMContext):
 @dp.message(OrderState.waiting_for_order)
 async def process_order(message: types.Message, state: FSMContext):
     username_text = f"@{message.from_user.username}" if message.from_user.username else f"ID: {message.from_user.id}"
-    await bot.send_message(ADMIN_ID, f"ЗАМОВЛЕННЯ від {username_text}:\n{message.text}")
-    await message.answer("Дякуємо! Ваше замовлення надіслано розробнику.")
+    try:
+        await bot.send_message(ADMIN_ID, f"ЗАМОВЛЕННЯ від {username_text}:\n{message.text}")
+        await message.answer("Дякуємо! Ваше замовлення надіслано розробнику.")
+    except Exception as e:
+        print(f"Помилка відправки замовлення адміну: {e}")
+        await message.answer("Сталася помилка при відправці замовлення. Спробуйте пізніше або зверніться в підтримку.")
     await state.clear()
 
 @dp.message(F.text == "Інформація")
@@ -67,7 +71,7 @@ async def cmd_price(message: types.Message):
 @dp.message(F.text == "Підтримка")
 @dp.message(Command("help"))
 async def cmd_help(message: types.Message):
-    kb_h = [[InlineKeyboardButton(text="Менеджер", url="https://t.me")]]
+    kb_h = [[InlineKeyboardButton(text="Менеджер", url="https://t.me")]] # <--- Зміни url на свій лінк
     await message.answer("Зв'язок:", reply_markup=InlineKeyboardMarkup(inline_keyboard=kb_h))
 
 # --- ЗАХИЩЕНЕ КЕРУВАННЯ ВЕБХУКОМ ПРИ СТАРТІ ---
@@ -82,9 +86,10 @@ async def lifespan(app: FastAPI):
     yield
     try:
         await bot.delete_webhook()
-        print("Бот зупинено, Webhook видалено.")
+        await bot.session.close() # Закриваємо сесію, щоб не було помилок в логах
+        print("Бот зупинено, Webhook видалено, сесію закрито.")
     except Exception as e:
-        print(f"Помилка видалення Webhook: {e}")
+        print(f"Помилка при зупинці бота: {e}")
 
 # Створення FastAPI додатка
 app = FastAPI(lifespan=lifespan)
