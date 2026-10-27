@@ -11,12 +11,10 @@ from aiogram.types import Update
 
 # Зчитуємо змінні з сервера
 API_TOKEN = os.getenv("BOT_TOKEN")
-RENDER_APP_NAME = os.getenv("RENDER_APP_NAME")
 
 ADMIN_ID = os.getenv("ADMIN_ID", 1492545732)
 
-# Виправлено формування URL для вебхука на Render + додано шлях /webhook
-WEBHOOK_URL = f"https://{RENDER_APP_NAME}://"
+WEBHOOK_URL = "https://tg-bot-1-9a5t://"
 
 # Ініціалізація бота
 bot = Bot(token=API_TOKEN)
