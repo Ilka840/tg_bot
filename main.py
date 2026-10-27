@@ -69,7 +69,7 @@ async def cmd_price(message: types.Message):
 @dp.message(F.text == "Підтримка")
 @dp.message(Command("help"))
 async def cmd_help(message: types.Message):
-    kb_h = [[InlineKeyboardButton(text="Менеджер", url="https://t.me")]] # <--- Зміни url на свій лінк
+    kb_h = [[InlineKeyboardButton(text="Менеджер", url="https://t.me/ilkka324")]] # <--- Зміни url на свій лінк
     await message.answer("Зв'язок:", reply_markup=InlineKeyboardMarkup(inline_keyboard=kb_h))
 
 # --- ЗАХИЩЕНЕ КЕРУВАННЯ ВЕБХУКОМ ПРИ СТАРТІ ---
