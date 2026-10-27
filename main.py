@@ -8,7 +8,7 @@ from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Update
 
-API_TOKEN = '8652491541:AAEJftjZCS7X_Hs06BiTLpC5JzaxRdDJb-Y'
+API_TOKEN = 'BOT_TOKEN'
 ADMIN_ID = 1492545732
 
 # URL вашого майбутнього додатка на Render (замініть my-bot-name на назву, яку вкажете на Render)
