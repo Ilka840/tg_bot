@@ -1,3 +1,4 @@
+import os
 import asyncio
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
@@ -8,11 +9,10 @@ from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Update
 
-API_TOKEN = 'BOT_TOKEN'
-ADMIN_ID = 1492545732
+API_TOKEN = os.getenv("BOT_TOKEN")
+RENDER_APP_NAME = os.getenv("RENDER_APP_NAME")
 
-# URL вашого майбутнього додатка на Render (замініть my-bot-name на назву, яку вкажете на Render)
-RENDER_APP_NAME = "my-bot-name" 
+ADMIN_ID = 1492545732
 WEBHOOK_URL = f"https://{RENDER_APP_NAME}://"
 
 bot = Bot(token=API_TOKEN)
